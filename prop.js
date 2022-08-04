@@ -1,0 +1,1 @@
+alert("Sejam bem vindos");
