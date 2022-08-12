@@ -2,6 +2,7 @@
 
 
 CREATE OR REPLACE TYPE USRASSISTENTEFISCAL."T_TBEXCEDENTE_ENT" AS OBJECT (
+  id                      NUMBER,
   dof_sequence            NUMBER(15),  
   dof_numero              VARCHAR2(60),
   dof_import_numero       VARCHAR2(40),
@@ -58,14 +59,21 @@ RETURN USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
 BEGIN			 
         SELECT CAST (
               MULTISET (
-                    SELECT
-                      dof_sequence,dof_numero,dof_import_numero,EDOF_CODIGO,mdof_codigo,serie,filial,INFORMANTE_EST_CODIGO,cpf_cgc,cnpj_fornecedor,dt_fato_gerador_imposto,dh_emissao,cfop_codigo,operacao,DENTRO_ESTADO,stc_codigo,cod_barra,nbm_codigo,merc_codigo,descricao,idf_num,mov,vl_unit,embalagem,quantidade,volume,ESTOQUE,entsai_uni_codigo,estoque_uni_codigo,preco_total,vl_contabil,vl_ajuste_preco_total,vl_base_icms,aliq_icms,vl_icms,vl_base_st,vl_st,aliq_stf,vl_ipi,status,MES_ANO_ARQUIVO, 1 AS ATUALIZAR_ESTOQUE
-                    FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
-                    WHERE
-                      E.FILIAL                       = P_FILIAL
-                      AND E.MERC_CODIGO              = P_MERC_CODIGO
-                      AND E.DT_FATO_GERADOR_IMPOSTO <= P_DATA
-                      AND E.ESTOQUE 				 > 0
+					SELECT *
+					FROM 
+					(
+						SELECT
+						  E.id, dof_sequence,dof_numero,dof_import_numero,EDOF_CODIGO,mdof_codigo,serie,filial,INFORMANTE_EST_CODIGO,cpf_cgc,cnpj_fornecedor,dt_fato_gerador_imposto,dh_emissao,cfop_codigo,operacao,DENTRO_ESTADO,stc_codigo,cod_barra,nbm_codigo,merc_codigo,descricao,idf_num,mov,vl_unit,embalagem,quantidade,volume,ESTOQUE,entsai_uni_codigo,estoque_uni_codigo,preco_total,vl_contabil,vl_ajuste_preco_total,vl_base_icms,aliq_icms,vl_icms,vl_base_st,vl_st,aliq_stf,vl_ipi,status,MES_ANO_ARQUIVO, 1 AS ATUALIZAR_ESTOQUE
+						FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
+						WHERE
+						  E.FILIAL                       = P_FILIAL
+						  AND E.MERC_CODIGO              = P_MERC_CODIGO
+						  AND E.DT_FATO_GERADOR_IMPOSTO <= P_DATA
+						  AND E.ESTOQUE 				 > 0
+						ORDER BY DT_FATO_GERADOR_IMPOSTO DESC
+					)
+					WHERE ROWNUM < 2
+					
                 ) AS USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
         ) INTO V_RET FROM DUAL;
 
@@ -78,6 +86,7 @@ BEGIN
 									FROM
 									(
 									  SELECT
+										   0 ID,	
 										   NFE.DOF_SEQUENCE,        -- CAMPO INDICA A ORDEM QUE A NOTA FOI GERADA
 										   --SYNCHRO.GBA_FORMAT_NOTA_SINTEGRA(NFE.NUMERO) NOTA,
 										   NFE.NUMERO DOF_NUMERO,
@@ -139,7 +148,7 @@ BEGIN
 									  F.FILIAL                		   = P_FILIAL
 									  AND NFE.DT_FATO_GERADOR_IMPOSTO <= P_DATA
 									  AND NEI.MERC_CODIGO       	   = P_MERC_CODIGO						  
-									  AND NFE.CTRL_SITUACAO_DOF 	   = 'N'      
+									  AND NFE.CTRL_SITUACAO_DOF 	   IN('N','D')
 									  AND 1 = 
 										  (
 											  CASE 
