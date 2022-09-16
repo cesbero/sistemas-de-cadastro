@@ -28,6 +28,9 @@ AS
 
 	V_VL_ESTOQUE_INICIAL          NUMBER(22,4) := 0;
     V_VL_ESTOQUE_ACUMULADO        NUMBER(22,4) := 0;
+	
+	V_DIF_MES_SAIDA_ULT_ENTRADA   INT := 0;
+	V_DIF_CORTE_ULT_ENTRADA		  INT := 3;
 
     CURSOR CUR_MERCADORIA IS SELECT '535' AS FILIAL, MERC_CODIGO FROM USRASSISTENTEFISCAL.GBA_MERC_Excedente_MG ORDER BY MERC_CODIGO;
   /*
@@ -82,8 +85,8 @@ BEGIN
 		  
 		  EXCEPTION
 		  WHEN NO_DATA_FOUND THEN V_VL_ESTOQUE_INICIAL := 0;		  
-      END;
-
+      END;		 
+		  
           -- Início Associando a Saída do Item a última entrada
           FOR NF_SAIDA IN ( SELECT * FROM USRASSISTENTEFISCAL.GBA_RECUP_ST_SAIDA_EXCEDENTE WHERE FILIAL = MERCADORIA.FILIAL AND MERC_CODIGO = MERCADORIA.MERC_CODIGO ORDER BY DATA DESC )
           LOOP
@@ -102,24 +105,37 @@ BEGIN
 				  LOOP
 					BEGIN
 					  V_BUSCA_ENTRADA := 0;
-
+												
 					  -- BUSCA ÚLTIMA ENTRADA NA LOJA
 					  FOR NF_ENTRADA IN (select * from table(USRASSISTENTEFISCAL.FN_EXCEDENTE_ENT(NF_SAIDA.FILIAL, NF_SAIDA.DATA,NF_SAIDA.MERC_CODIGO)) )
 					  LOOP
 						BEGIN
 							V_ENCONTROU_ENTRADA := 1;
 							V_BUSCA_ENTRADA   	:= 1;
+							
+							V_DIF_MES_SAIDA_ULT_ENTRADA :=0;
+							
+							-- Considerando a última entrada para a mesma loja, somente se, a data de entrada não seja superior a 3 meses da data de saída
+								SELECT ABS(months_between(NF_SAIDA.DATA, NF_ENTRADA.DT_FATO_GERADOR_IMPOSTO)) INTO V_DIF_MES_SAIDA_ULT_ENTRADA  FROM DUAL;
+								
+								IF V_DIF_MES_SAIDA_ULT_ENTRADA > V_DIF_CORTE_ULT_ENTRADA
+								THEN 
+									BEGIN
+										V_BUSCA_ENTRADA := 0;
+										EXIT;
+									END;
+								END IF;
 
 							IF NF_ENTRADA.ESTOQUE >= V_VL_SALDO_SAIDA
 							THEN
 							  BEGIN
-							  V_VL_ESTOQUE     := NF_ENTRADA.ESTOQUE - V_VL_SALDO_SAIDA;
-							  V_VL_SALDO_SAIDA :=  0;
+								V_VL_ESTOQUE     := NF_ENTRADA.ESTOQUE - V_VL_SALDO_SAIDA;
+								V_VL_SALDO_SAIDA :=  0;
 							  END;
 							ELSE
 							  BEGIN
-							  V_VL_ESTOQUE     := 0;
-							  V_VL_SALDO_SAIDA := V_VL_SALDO_SAIDA - NF_ENTRADA.ESTOQUE;
+								V_VL_ESTOQUE     := 0;
+								V_VL_SALDO_SAIDA := V_VL_SALDO_SAIDA - NF_ENTRADA.ESTOQUE;
 							  END;
 							END IF;
 
@@ -173,13 +189,13 @@ BEGIN
 								IF NF_ENTRADA.ESTOQUE >= V_VL_SALDO_SAIDA
 								THEN
 								  BEGIN
-								  V_VL_ESTOQUE     := NF_ENTRADA.ESTOQUE - V_VL_SALDO_SAIDA;
-								  V_VL_SALDO_SAIDA :=  0;
+									V_VL_ESTOQUE     := NF_ENTRADA.ESTOQUE - V_VL_SALDO_SAIDA;
+									V_VL_SALDO_SAIDA :=  0;
 								  END;
 								ELSE
 								  BEGIN
-								  V_VL_ESTOQUE     := 0;
-								  V_VL_SALDO_SAIDA := V_VL_SALDO_SAIDA - NF_ENTRADA.ESTOQUE;
+									V_VL_ESTOQUE     := 0;
+									V_VL_SALDO_SAIDA := V_VL_SALDO_SAIDA - NF_ENTRADA.ESTOQUE;
 								  END;
 								END IF;
 

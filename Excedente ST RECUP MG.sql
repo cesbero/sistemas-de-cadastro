@@ -223,8 +223,8 @@ DECLARE
   V_FILIAL VARCHAR2(4);
      
 BEGIN
-  V_DATA_INICIAL   := TO_DATE('2016/11/01','YYYY/MM/DD');
-  V_DATA_FINAL     := TO_DATE('2016/11/30','YYYY/MM/DD');  
+  V_DATA_INICIAL   := TO_DATE('2016/12/01','YYYY/MM/DD');
+  V_DATA_FINAL     := TO_DATE('2016/12/31','YYYY/MM/DD');  
   V_FILIAL         := '535';
   
   WHILE V_DATA_INICIAL <= V_DATA_FINAL
@@ -295,7 +295,7 @@ BEGIN
     WHERE
      NFE.DT_FATO_GERADOR_IMPOSTO = V_DATA_INICIAL
      AND F.FILIAL 				 = V_FILIAL
-	 AND NFE.CTRL_SITUACAO_DOF   IN('N','D')  -- Nota Autorizada        
+	 AND NFE.CTRL_SITUACAO_DOF   ='N'  -- Nota Autorizada        
      AND
         1 = 
         (
@@ -389,7 +389,7 @@ BEGIN
 		WHERE 
 			 NFE.DT_FATO_GERADOR_IMPOSTO = V_DATA_INICIAL
 			 AND F.FILIAL 				 = V_FILIAL   
-			 AND NFE.CTRL_SITUACAO_DOF   IN('N','D')
+			 AND NFE.CTRL_SITUACAO_DOF   ='N'
 			 AND NEI.CFOP_CODIGO     	 = '5.405'
 			 AND NEI.STC_CODIGO       	 IN('10','60','70')
 			 AND NFE.MDOF_CODIGO 		 = '55';
@@ -463,7 +463,7 @@ BEGIN
 		 WHERE 
 		 E.dt_emissao 				 = V_DATA_INICIAL
 		 AND T.FILIAL 				 = V_FILIAL   
-		 AND E.ctrl_situacao 		 IN ('N','D')
+		 AND E.ctrl_situacao 		 ='N'
 		 AND E.STC_CODIGO   		 IN('10','60','70')
 		 AND E.CFOP_CODIGO  		 = '5.405';
       	  
