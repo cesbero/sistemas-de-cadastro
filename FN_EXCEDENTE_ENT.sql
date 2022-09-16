@@ -8,15 +8,15 @@ CREATE OR REPLACE TYPE USRASSISTENTEFISCAL."T_TBEXCEDENTE_ENT" AS OBJECT (
   dof_import_numero       VARCHAR2(40),
   EDOF_CODIGO             VARCHAR2(10),
   mdof_codigo             VARCHAR2(2),
-  serie               VARCHAR2(6),
+  serie               	  VARCHAR2(6),
   filial                  VARCHAR2(3),
   INFORMANTE_EST_CODIGO   VARCHAR2(20),
   cpf_cgc                 VARCHAR2(19),
   cnpj_fornecedor         VARCHAR2(19),
   dt_fato_gerador_imposto DATE,
-  dh_emissao        DATE,
+  dh_emissao        	  DATE,
   cfop_codigo             VARCHAR2(8),
-  operacao          VARCHAR2(100),  
+  operacao          	  VARCHAR2(100),  
   DENTRO_ESTADO           VARCHAR2(1),
   stc_codigo              VARCHAR2(2),
   cod_barra               VARCHAR2(255),  
@@ -148,7 +148,7 @@ BEGIN
 									  F.FILIAL                		   = P_FILIAL
 									  AND NFE.DT_FATO_GERADOR_IMPOSTO <= P_DATA
 									  AND NEI.MERC_CODIGO       	   = P_MERC_CODIGO						  
-									  AND NFE.CTRL_SITUACAO_DOF 	   IN('N','D')
+									  AND NFE.CTRL_SITUACAO_DOF 	   ='N'
 									  AND 1 = 
 										  (
 											  CASE 
@@ -156,6 +156,7 @@ BEGIN
 											  WHEN NEI.CFOP_CODIGO = '1.910' 													 							THEN 1  
 											  WHEN NEI.CFOP_CODIGO = '1.949' AND (NEI.STC_CODIGO = '10' OR NEI.STC_CODIGO = '70') 							THEN 1  
 											  WHEN NEI.CFOP_CODIGO = '2.403' 																				THEN 1     
+											  WHEN NEI.CFOP_CODIGO = '1.409' 																				THEN 1
 											  WHEN NEI.CFOP_CODIGO = '2.409' AND (NEI.STC_CODIGO = '10' OR NEI.STC_CODIGO = '70') 							THEN 1                 
 											  WHEN NEI.CFOP_CODIGO = '2.910' AND (NEI.STC_CODIGO = '10' OR NEI.STC_CODIGO = '70') 							THEN 1      
 											  WHEN NEI.CFOP_CODIGO = '2.923' AND (NEI.STC_CODIGO = '10' OR NEI.STC_CODIGO = '70') 							THEN 1        
