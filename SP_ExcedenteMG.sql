@@ -13,55 +13,55 @@ END;
 CREATE OR REPLACE PROCEDURE USRASSISTENTEFISCAL.SP_ExcedenteMG(P_FILIAL VARCHAR2, DT_INICIAL VARCHAR2, FORMATO VARCHAR2)
 AS
     V_VL_BC_ST_UNIT                   NUMBER(19,2) := 0;
-  V_VL_BC_ST_UNIT_MEDIO             NUMBER(19,2) := 0;
+	V_VL_BC_ST_UNIT_MEDIO             NUMBER(19,2) := 0;
     V_VL_BC_ST_ACORDO_VENDIDA         NUMBER(19,2) := 0;
     V_VL_DIFERENCA_ENTRE_BASE         NUMBER(19,2) := 0;
     V_VL_CREDITO                      NUMBER(19,2) := 0;
     V_VL_SALDO_SAIDA                  NUMBER(19,2) := 0;
-  V_VL_SALDO_REF_ESTOQUE_CD         NUMBER(19,2) := 0;
+	V_VL_SALDO_REF_ESTOQUE_CD         NUMBER(19,2) := 0;
     V_VL_ESTOQUE                      NUMBER(19,2) := 0;
 
     V_DET_ID                          INT          := 0;
     V_REC_ID                          INT          := 0;
     V_ID_ENTRADA                      INT          := 0;
-  V_REF_ID_ENTRADA                  INT          := 0;
+	V_REF_ID_ENTRADA                  INT          := 0;
 
     V_ENCONTROU_ENTRADA               INT          := 0;
-  V_BUSCA_ENTRADA                   INT          := 0;
+	V_BUSCA_ENTRADA                   INT          := 0;
 
     V_VL_MEDIO                        NUMBER(19,2) := 0;
     V_VL_BASE_ACUMULADO               NUMBER(19,2) := 0;
-  V_VL_BASE_ST_CALCULADA            NUMBER(19,2) := 0;
-  V_VL_BASE_ST_CALCULADA_ACUMULADO  NUMBER(19,2) := 0;
+	V_VL_BASE_ST_CALCULADA            NUMBER(19,2) := 0;
+	V_VL_BASE_ST_CALCULADA_ACUMULADO  NUMBER(19,2) := 0;
     V_VL_QTD_ACUMULADO                NUMBER(19,2) := 0;
-  V_ALIQ_ST                         NUMBER(15,4) := 0;
+	V_ALIQ_ST                         NUMBER(15,4) := 0;
 
-  V_VL_BASE_ACUMULADO_CD            NUMBER(19,2) := 0;
-  V_VL_QTD_ACUMULADO_CD             NUMBER(19,2) := 0;
+	V_VL_BASE_ACUMULADO_CD            NUMBER(19,2) := 0;
+	V_VL_QTD_ACUMULADO_CD             NUMBER(19,2) := 0;
+	
+	V_VL_ICMS_CD                      NUMBER(19,2) := 0;
+	V_VL_ST_CD                        NUMBER(19,2) := 0;
+	V_VL_BC_ST_CD                     NUMBER(19,2) := 0;
+	V_VL_BC_ICMS_CD                   NUMBER(19,2) := 0;
+	V_SOMA_BC_ST_UNIT_CD              NUMBER(19,2) := 0;
+	V_QTD_NOTA_CD                     INT;
 
-  V_VL_ICMS_CD                      NUMBER(19,2) := 0;
-  V_VL_ST_CD                        NUMBER(19,2) := 0;
-  V_VL_BC_ST_CD                     NUMBER(19,2) := 0;
-  V_VL_BC_ICMS_CD                   NUMBER(19,2) := 0;
-  V_SOMA_BC_ST_UNIT_CD              NUMBER(19,2) := 0;
-  V_QTD_NOTA_CD                   INT;
-
-  V_VL_ESTOQUE_INICIAL              NUMBER(22,4) := 0;
+	V_VL_ESTOQUE_INICIAL              NUMBER(22,4) := 0;
     V_VL_ESTOQUE_ACUMULADO            NUMBER(22,4) := 0;
 
-  V_NOTA_JA_ASSOCIADA               INT        := 0;
+	V_NOTA_JA_ASSOCIADA               INT          := 0;
 
-  V_VL_BC_ST_UNIT_MEDIO_JA_ASSOCIADO NUMBER(19,2) := 0;
-  V_VL_BASE_ACUMULADO_JA_ASSOCIADO   NUMBER(19,2) := 0;
-  V_VL_QTD_ACUMULADO_JA_ASSOCIADO    NUMBER(19,2) := 0;
-  V_VL_BC_ST_JA_ASSOCIADO            NUMBER(19,2) := 0;
-  V_DET_ID_JA_ASSOCIADO        INT := 0;
-
-  V_VL_BC_ST_ANTERIOR                NUMBER(19,2) := 0;
-  V_VL_QTD_ANTERIOR                  NUMBER(19,2) := 0;
-
-  V_QTD_REF							INT := 0;
-  V_REF								INT := 0;
+	V_VL_BC_ST_UNIT_MEDIO_JA_ASSOCIADO NUMBER(19,2) := 0;
+	V_VL_BASE_ACUMULADO_JA_ASSOCIADO   NUMBER(19,2) := 0;
+	V_VL_QTD_ACUMULADO_JA_ASSOCIADO    NUMBER(19,2) := 0;
+	V_VL_BC_ST_JA_ASSOCIADO            NUMBER(19,2) := 0;
+	V_DET_ID_JA_ASSOCIADO        	   INT 			:= 0;
+	
+	V_VL_BC_ST_ANTERIOR                NUMBER(19,2) := 0;
+	V_VL_QTD_ANTERIOR                  NUMBER(19,2) := 0;
+	
+	V_QTD_REF							INT 		:= 0;
+	V_REF								INT 		:= 0;
 
   /*
     CURSOR CUR_MERCADORIA IS SELECT '535' AS FILIAL, MERC_CODIGO
@@ -101,33 +101,34 @@ BEGIN
     EXIT WHEN CUR_MERCADORIA%NOTFOUND;
     BEGIN
 
-  select USRASSISTENTEFISCAL.SEQ_Excedente_MG_MERC.NEXTVAL INTO V_REC_ID from dual;
+		select USRASSISTENTEFISCAL.SEQ_Excedente_MG_MERC.NEXTVAL INTO V_REC_ID from dual;
 
     --V_REC_ID                        := NVL(V_REC_ID,0) + 1;
-    V_DET_ID                      := 0;
+    V_DET_ID                      		:= 0;
 
     V_VL_ESTOQUE                        := 0;
-    V_VL_BC_ST_UNIT                   := 0;
-    V_VL_BC_ST_UNIT_MEDIO             := 0;
-    V_VL_ESTOQUE_ACUMULADO            := 0;
-
-    V_VL_QTD_ACUMULADO_CD             := 0;
-    V_VL_BASE_ACUMULADO_CD            := 0;
-
-    V_VL_BASE_ST_CALCULADA            := 0;
+    V_VL_BC_ST_UNIT                   	:= 0;
+    V_VL_BC_ST_UNIT_MEDIO             	:= 0;
+    V_VL_ESTOQUE_ACUMULADO            	:= 0;
+	
+    V_VL_QTD_ACUMULADO_CD             	:= 0;
+    V_VL_BASE_ACUMULADO_CD            	:= 0;
+	
+    V_VL_BASE_ST_CALCULADA            	:= 0;
     V_VL_BASE_ST_CALCULADA_ACUMULADO    := 0;
-    V_NOTA_JA_ASSOCIADA               := 0;
+    V_NOTA_JA_ASSOCIADA               	:= 0;
     V_VL_BC_ST_UNIT_MEDIO_JA_ASSOCIADO  := 0;
     V_VL_BASE_ACUMULADO_JA_ASSOCIADO    := 0;
     V_VL_QTD_ACUMULADO_JA_ASSOCIADO     := 0;
-    V_VL_BC_ST_JA_ASSOCIADO           := 0;
-  V_DET_ID_JA_ASSOCIADO         := 0;
+    V_VL_BC_ST_JA_ASSOCIADO           	:= 0;
+	V_DET_ID_JA_ASSOCIADO         		:= 0;
 
-    V_VL_BC_ST_ANTERIOR               := 0;
-    V_VL_QTD_ANTERIOR               := 0;
-	V_QTD_REF :=0;
-	V_REF 							:= 0;
-    -- Verifica se a mercadoria possui referência no último mês.
+    V_VL_BC_ST_ANTERIOR               	:= 0;
+    V_VL_QTD_ANTERIOR               	:= 0;
+	V_QTD_REF 							:= 0;
+	V_REF 								:= 0;
+   
+   -- Verifica se a mercadoria possui referência no último mês.
     BEGIN
       SELECT
         ESTOQUE_FINAL,BASE_ST_ACUMULADA,VOLUME_ACUMULADO INTO  V_VL_ESTOQUE_INICIAL, V_VL_BC_ST_ANTERIOR, V_VL_QTD_ANTERIOR
@@ -146,8 +147,9 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN BEGIN V_VL_ESTOQUE_INICIAL := 0; V_VL_BC_ST_ANTERIOR := 0; V_VL_QTD_ANTERIOR := 0;  END;
     END;
 
-    V_VL_BASE_ACUMULADO := V_VL_BC_ST_ANTERIOR;
-    V_VL_QTD_ACUMULADO  := V_VL_QTD_ANTERIOR;
+	--calcular a média a cada mês. Alterado dia 12/06/2023, após reunião com Karina e Lucas Barbosa.
+    V_VL_BASE_ACUMULADO := 0;
+    V_VL_QTD_ACUMULADO  := 0;
 
     -- Início Associando a Saída do Item a última entrada
     FOR NF_SAIDA IN ( SELECT * 
@@ -181,42 +183,6 @@ BEGIN
           BEGIN
 				V_ENCONTROU_ENTRADA := 1;
 				V_BUSCA_ENTRADA     := 1;
-
-				-- Buscando o Médio. CONSIDERANDO A ÚLTIMA ASSOCIAÇÃO
-				BEGIN
-				SELECT
-					1,DET_ID,VL_BC_ST_UNIT_MEDIO, VL_BASE_ACUMULADA, QTD_ACUMULADA,VL_BC_ST
-					INTO
-					   V_NOTA_JA_ASSOCIADA,
-					   V_DET_ID_JA_ASSOCIADO,
-					   V_VL_BC_ST_UNIT_MEDIO_JA_ASSOCIADO,
-					   V_VL_BASE_ACUMULADO_JA_ASSOCIADO,
-					   V_VL_QTD_ACUMULADO_JA_ASSOCIADO,
-					   V_VL_BC_ST_JA_ASSOCIADO
-				FROM
-				(
-				  SELECT
-						DISTINCT
-						(SELECT DET_ID FROM USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT B WHERE B.REC_ID = A.REC_ID AND B.ID_ENTRADA = A.ID_ENTRADA AND ROWNUM < 2 ) DET_ID,
-						A.ID_ENTRADA, A.VOLUME, A.VL_BC_ST, A.VL_BC_ST_UNIT, A.VL_BC_ST_UNIT_MEDIO, A.VL_BASE_ACUMULADA, A.QTD_ACUMULADA
-				  FROM USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT A
-				  WHERE
-					  REC_ID         = V_REC_ID
-					  AND ID_ENTRADA = NF_ENTRADA.ID
-					  AND FILIAL     = MERCADORIA.FILIAL
-				);
-
-				EXCEPTION
-				WHEN NO_DATA_FOUND THEN
-					BEGIN
-					  V_NOTA_JA_ASSOCIADA              		:= 0;
-					  V_VL_BC_ST_UNIT_MEDIO_JA_ASSOCIADO 	:= 0;
-					  V_VL_BASE_ACUMULADO_JA_ASSOCIADO   	:= 0;
-					  V_VL_QTD_ACUMULADO_JA_ASSOCIADO    	:= 0;
-					  V_DET_ID_JA_ASSOCIADO        			:= 0;
-					  V_VL_BC_ST_JA_ASSOCIADO          		:= NF_ENTRADA.VL_BASE_ST;
-					END;
-				END;
 
 				-- Fluxo Normal
 				
@@ -298,29 +264,17 @@ BEGIN
 
 				IF NF_ENTRADA.cfop_codigo = '1.409' -- BUSCA ENTRADA DO CD. TRAZER OS VALORES DE IMPOSTO E ATUALIZAR NA ENTRADA DA LOJA
 				THEN
-					IF NVL(V_NOTA_JA_ASSOCIADA,0) = 1
-					THEN
-					  BEGIN
-						--INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG VALUES(V_REC_ID,V_DET_ID,V_DET_ID_JA_ASSOCIADO,V_REF_ID_ENTRADA,'CD1',NF_SAIDA.FILIAL,NF_SAIDA.MERC_CODIGO,NULL,NF_SAIDA.DATA,NULL,NULL,NULL,NULL,NULL,NULL);
+				  -- Fluxo buscando do CD para notas de transferência
+				  BEGIN
+					V_BUSCA_ENTRADA := 1;
 
-						UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT A
-						  SET id_CD_REF = (SELECT ID_CD_REF FROM USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT B WHERE B.REC_ID = V_REC_ID AND B.DET_ID = V_DET_ID_JA_ASSOCIADO AND B.ID_ENTRADA = V_REF_ID_ENTRADA AND ROWNUM < 2)
-						WHERE REC_ID      = V_REC_ID
-							AND DET_ID    = V_DET_ID
-							AND ID_ENTRADA  = V_REF_ID_ENTRADA;
-					  END;
-					ELSE
-					  -- Fluxo buscando do CD para notas de transferência
-					  BEGIN
-						V_BUSCA_ENTRADA := 1;
+					-- DESPREZAR DADOS DA NOTA DE ENTRADA DA LOJA
+					V_SOMA_BC_ST_UNIT_CD := 0;
+					V_QTD_NOTA_CD        := 0;
 
-						-- DESPREZAR DADOS DA NOTA DE ENTRADA DA LOJA
-						V_SOMA_BC_ST_UNIT_CD := 0;
-						V_QTD_NOTA_CD        := 0;
-
-						--WHILE V_VL_SALDO_REF_ESTOQUE_CD > 0 AND V_BUSCA_ENTRADA = 1
-						--LOOP
-						--BEGIN
+					WHILE V_VL_SALDO_REF_ESTOQUE_CD > 0 AND V_BUSCA_ENTRADA = 1
+					LOOP
+					BEGIN
 						V_BUSCA_ENTRADA       := 0;
 
 						-- BUSCA ÚLTIMA ENTRADA NO CD
@@ -328,6 +282,19 @@ BEGIN
 						LOOP
 						  BEGIN
 							V_BUSCA_ENTRADA := 1;
+							
+							IF NF_ENTRADA_CD.ESTOQUE >= V_VL_SALDO_REF_ESTOQUE_CD
+							THEN
+							  BEGIN
+								  V_VL_ESTOQUE     			:= NF_ENTRADA_CD.ESTOQUE - V_VL_SALDO_REF_ESTOQUE_CD;
+								  V_VL_SALDO_REF_ESTOQUE_CD :=  0;
+							  END;
+							ELSE
+							  BEGIN
+								  V_VL_ESTOQUE     			:= 0;
+								  V_VL_SALDO_REF_ESTOQUE_CD := V_VL_SALDO_REF_ESTOQUE_CD - NF_ENTRADA_CD.ESTOQUE;
+							  END;
+							END IF;
 
 							IF NVL(NF_ENTRADA_CD.VOLUME,0) <> 0 THEN V_VL_BC_ST_UNIT := NF_ENTRADA_CD.VL_BASE_ST/NF_ENTRADA_CD.VOLUME; ELSE V_VL_BC_ST_UNIT := 0;  END IF;
 
@@ -337,79 +304,101 @@ BEGIN
 
 							IF NF_ENTRADA_CD.ATUALIZAR_ESTOQUE = 1
 							THEN
-							BEGIN
-							  UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
-								SET id_CD_REF = NF_ENTRADA_CD.ID
-							  WHERE
-								REC_ID      	= V_REC_ID
-								AND DET_ID    	= V_DET_ID
-								AND ID_ENTRADA  = V_REF_ID_ENTRADA;
+								BEGIN
+									UPDATE USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET
+										SET ESTOQUE = V_VL_ESTOQUE
+									WHERE
+										ID = NF_ENTRADA_CD.ID;
+										
+									BEGIN
+										SELECT
+											id_CD_REF
+											INTO
+											   V_REF
+										FROM
+											USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
+											WHERE
+												REC_ID      	= V_REC_ID
+												AND DET_ID    	= V_DET_ID
+												AND ID_ENTRADA  = V_REF_ID_ENTRADA
+												AND id_CD_REF   = NF_ENTRADA_CD.ID
+												AND ROWNUM < 2;
 
-							  --INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT(REC_ID,DET_ID,ID_ENTRADA,filial,MERC_CODIGO,volume,VL_BC_ST,VL_BC_ST_UNIT,DT_FATO_GERADOR,DT_REGISTRO,FAZ_PARTE_PEDIDO) VALUES(V_REC_ID,V_DET_ID,NF_ENTRADA_CD.ID,NF_ENTRADA_CD.FILIAL,NF_ENTRADA_CD.MERC_CODIGO,NF_ENTRADA_CD.VOLUME,NF_ENTRADA_CD.vl_base_st,V_VL_BC_ST_UNIT,NF_ENTRADA_CD.dt_fato_gerador_imposto,SYSDATE,'N');
+										EXCEPTION
+											WHEN NO_DATA_FOUND THEN V_REF := 0;
+									END;
 
-							  --INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG VALUES(V_REC_ID,V_DET_ID,NF_ENTRADA_CD.ID,V_REF_ID_ENTRADA,'LOJA PASSO UPDATE',NF_ENTRADA_CD.FILIAL,NF_SAIDA.MERC_CODIGO,NULL,NF_SAIDA.DATA,NULL,NULL,NULL,NULL,NULL,NULL);
-							END;
+									IF NVL(V_REF,0) = 0
+									THEN
+										BEGIN	
+											UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
+												SET id_CD_REF  = NF_ENTRADA_CD.ID,
+													estoque_cd = V_VL_ESTOQUE
+											WHERE
+												REC_ID      	= V_REC_ID
+												AND DET_ID    	= V_DET_ID
+												AND ID_ENTRADA  = V_REF_ID_ENTRADA;
+										END;
+									ELSE
+										BEGIN
+											UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
+												SET estoque_cd = V_VL_ESTOQUE
+											WHERE
+												REC_ID      	= V_REC_ID
+												AND DET_ID    	= V_DET_ID
+												AND ID_ENTRADA  = V_REF_ID_ENTRADA
+												AND id_CD_REF   = NF_ENTRADA_CD.ID;
+										END;
+									END IF;
+
+								  --INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG VALUES(V_REC_ID,V_DET_ID,NF_ENTRADA_CD.ID,V_REF_ID_ENTRADA,'LOJA PASSO UPDATE',NF_ENTRADA_CD.FILIAL,NF_SAIDA.MERC_CODIGO,NULL,NF_SAIDA.DATA,NULL,NULL,NULL,NULL,NULL,NULL);
+								END;
 							ELSE
-							BEGIN
-							   select USRASSISTENTEFISCAL.SEQ_EXCEDENTE_MG_ENTRADA_DET.NEXTVAL INTO V_ID_ENTRADA from dual;
-							   --V_ID_ENTRADA    := NVL(V_ID_ENTRADA,0) + 1;
+								BEGIN
+								   select USRASSISTENTEFISCAL.SEQ_EXCEDENTE_MG_ENTRADA_DET.NEXTVAL INTO V_ID_ENTRADA from dual;
 
-							   INSERT INTO USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET VALUES(V_ID_ENTRADA,NF_ENTRADA_CD.dof_sequence,NF_ENTRADA_CD.dof_numero,NF_ENTRADA_CD.dof_import_numero,NF_ENTRADA_CD.EDOF_CODIGO,NF_ENTRADA_CD.mdof_codigo,NF_ENTRADA_CD.serie,NF_ENTRADA_CD.filial,NF_ENTRADA_CD.INFORMANTE_EST_CODIGO,NF_ENTRADA_CD.cpf_cgc,NF_ENTRADA_CD.cnpj_fornecedor,NF_ENTRADA_CD.dt_fato_gerador_imposto,NF_ENTRADA_CD.dh_emissao,NF_ENTRADA_CD.cfop_codigo,NF_ENTRADA_CD.operacao,NF_ENTRADA_CD.DENTRO_ESTADO,NF_ENTRADA_CD.stc_codigo,NF_ENTRADA_CD.cod_barra,NF_ENTRADA_CD.nbm_codigo,NF_ENTRADA_CD.merc_codigo,NF_ENTRADA_CD.descricao,NF_ENTRADA_CD.idf_num,NF_ENTRADA_CD.mov,NF_ENTRADA_CD.vl_unit,NF_ENTRADA_CD.embalagem,NF_ENTRADA_CD.quantidade,NF_ENTRADA_CD.volume,NF_ENTRADA_CD.ESTOQUE,NF_ENTRADA_CD.entsai_uni_codigo,NF_ENTRADA_CD.estoque_uni_codigo,NF_ENTRADA_CD.preco_total,NF_ENTRADA_CD.vl_contabil,NF_ENTRADA_CD.vl_ajuste_preco_total,NF_ENTRADA_CD.vl_base_icms,NF_ENTRADA_CD.aliq_icms,NF_ENTRADA_CD.vl_icms,NF_ENTRADA_CD.vl_base_st,NF_ENTRADA_CD.vl_base_st,NF_ENTRADA_CD.vl_st,NF_ENTRADA_CD.aliq_stf,NF_ENTRADA_CD.vl_ipi,V_VL_BC_ST_UNIT,NF_ENTRADA_CD.status,NF_ENTRADA_CD.MES_ANO_ARQUIVO,SYSDATE);
+								   INSERT INTO USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET VALUES(V_ID_ENTRADA,NF_ENTRADA_CD.dof_sequence,NF_ENTRADA_CD.dof_numero,NF_ENTRADA_CD.dof_import_numero,NF_ENTRADA_CD.EDOF_CODIGO,NF_ENTRADA_CD.mdof_codigo,NF_ENTRADA_CD.serie,NF_ENTRADA_CD.filial,NF_ENTRADA_CD.INFORMANTE_EST_CODIGO,NF_ENTRADA_CD.cpf_cgc,NF_ENTRADA_CD.cnpj_fornecedor,NF_ENTRADA_CD.dt_fato_gerador_imposto,NF_ENTRADA_CD.dh_emissao,NF_ENTRADA_CD.cfop_codigo,NF_ENTRADA_CD.operacao,NF_ENTRADA_CD.DENTRO_ESTADO,NF_ENTRADA_CD.stc_codigo,NF_ENTRADA_CD.cod_barra,NF_ENTRADA_CD.nbm_codigo,NF_ENTRADA_CD.merc_codigo,NF_ENTRADA_CD.descricao,NF_ENTRADA_CD.idf_num,NF_ENTRADA_CD.mov,NF_ENTRADA_CD.vl_unit,NF_ENTRADA_CD.embalagem,NF_ENTRADA_CD.quantidade,NF_ENTRADA_CD.volume,V_VL_ESTOQUE,NF_ENTRADA_CD.entsai_uni_codigo,NF_ENTRADA_CD.estoque_uni_codigo,NF_ENTRADA_CD.preco_total,NF_ENTRADA_CD.vl_contabil,NF_ENTRADA_CD.vl_ajuste_preco_total,NF_ENTRADA_CD.vl_base_icms,NF_ENTRADA_CD.aliq_icms,NF_ENTRADA_CD.vl_icms,NF_ENTRADA_CD.vl_base_st,NF_ENTRADA_CD.vl_base_st,NF_ENTRADA_CD.vl_st,NF_ENTRADA_CD.aliq_stf,NF_ENTRADA_CD.vl_ipi,V_VL_BC_ST_UNIT,NF_ENTRADA_CD.status,NF_ENTRADA_CD.MES_ANO_ARQUIVO,SYSDATE);
 
-							   UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
-								SET id_CD_REF = V_ID_ENTRADA
-							  WHERE
-								REC_ID      = V_REC_ID
-								AND DET_ID    = V_DET_ID
-								AND ID_ENTRADA  = V_REF_ID_ENTRADA;
+								   UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT
+									SET id_CD_REF  = V_ID_ENTRADA,
+										estoque_cd = V_VL_ESTOQUE
+								  WHERE
+									REC_ID          = V_REC_ID
+									AND DET_ID      = V_DET_ID
+									AND ID_ENTRADA  = V_REF_ID_ENTRADA;
 
-							   --INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT(REC_ID,DET_ID,ID_ENTRADA,filial,MERC_CODIGO,volume,VL_BC_ST,VL_BC_ST_UNIT,DT_FATO_GERADOR,DT_REGISTRO,FAZ_PARTE_PEDIDO) VALUES(V_REC_ID,V_DET_ID,V_ID_ENTRADA,NF_ENTRADA_CD.FILIAL,NF_ENTRADA_CD.MERC_CODIGO,NF_ENTRADA_CD.VOLUME,NF_ENTRADA_CD.vl_base_st,V_VL_BC_ST_UNIT,NF_ENTRADA_CD.dt_fato_gerador_imposto,SYSDATE,'N');
-
-							  -- INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG VALUES(V_REC_ID,V_DET_ID,V_ID_ENTRADA,V_REF_ID_ENTRADA,'LOJA PASSO UPDATE '||V_ID_ENTRADA,NF_ENTRADA_CD.FILIAL,NF_SAIDA.MERC_CODIGO,NULL,NF_SAIDA.DATA,NULL,NULL,NULL,NULL,NULL,NULL);
-							 END;
+								  -- INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG VALUES(V_REC_ID,V_DET_ID,V_ID_ENTRADA,V_REF_ID_ENTRADA,'LOJA PASSO UPDATE '||V_ID_ENTRADA,NF_ENTRADA_CD.FILIAL,NF_SAIDA.MERC_CODIGO,NULL,NF_SAIDA.DATA,NULL,NULL,NULL,NULL,NULL,NULL);
+								 END;
 							END IF; -- FIM ÚLTIMA ENTRADA NO CD
 						  END;
 						END LOOP; -- FIM WHILE BUSCA ÚLTIMA ENTRADA NO CD
+					END;
+					END LOOP;
+					
+					IF NVL(V_QTD_NOTA_CD,0) <> 0 THEN V_VL_BC_ST_UNIT := V_SOMA_BC_ST_UNIT_CD / V_QTD_NOTA_CD; ELSE V_VL_BC_ST_UNIT := 0;  END IF;
 
-						IF NVL(V_QTD_NOTA_CD,0) <> 0 THEN V_VL_BC_ST_UNIT := V_SOMA_BC_ST_UNIT_CD / V_QTD_NOTA_CD; ELSE V_VL_BC_ST_UNIT := 0;  END IF;
+					V_VL_BASE_ST_CALCULADA := NVL(NF_ENTRADA.VOLUME,0) * V_VL_BC_ST_UNIT;
 
-						V_VL_BASE_ST_CALCULADA := NVL(NF_ENTRADA.VOLUME,0) * V_VL_BC_ST_UNIT;
+					-- Atualizando imposto na ENTRADA da LOJA
+					UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT A
+					SET
+					  VL_BC_ST_UNIT_CD     	= V_VL_BC_ST_UNIT,
+					  VL_BC_ST_UNIT    		= (CASE WHEN VOLUME = 0 THEN 0 ELSE (V_VL_BASE_ST_CALCULADA/VOLUME) END),
+					  VL_BC_ST             	= V_VL_BASE_ST_CALCULADA,
+					  VL_BASE_ACUMULADA_CD 	= V_SOMA_BC_ST_UNIT_CD,
+					  QTD_ACUMULADA_CD   	= V_QTD_NOTA_CD
+					WHERE
+					  A.REC_ID          = V_REC_ID
+					  AND A.DET_ID      = V_DET_ID
+					  AND A.ID_ENTRADA  = V_REF_ID_ENTRADA;
 
-						/*
-						INSERT INTO USRASSISTENTEFISCAL.Excedente_MG_LOG (REC_ID,DET_ID,DET_ID_ASSOCIADO,ID_ENTRADA,FILIAL,MERC_CODIGO,VOLUME,BC_ST,VOLUME_ACUMULADO,BC_ST_ACUMULADO)
-						  VALUES(V_REC_ID,
-							   V_DET_ID,
-							   V_REF_ID_ENTRADA,
-							   NF_ENTRADA.ID,
-							   '607',
-							   NF_ENTRADA.MERC_CODIGO,
-							   NF_ENTRADA.VOLUME,
-							   V_VL_BASE_ST_CALCULADA,
-							   V_QTD_NOTA_CD,
-							   V_SOMA_BC_ST_UNIT_CD);
-						*/
-						
-						-- Atualizando imposto na ENTRADA da LOJA
-						UPDATE USRASSISTENTEFISCAL.Excedente_MG_SAIDAXENT A
-						SET
-						  VL_BC_ST_UNIT_CD     	= V_VL_BC_ST_UNIT,
-						  VL_BC_ST_UNIT    		= (CASE WHEN VOLUME = 0 THEN 0 ELSE (V_VL_BASE_ST_CALCULADA/VOLUME) END),
-						  VL_BC_ST             	= V_VL_BASE_ST_CALCULADA,
-						  VL_BASE_ACUMULADA_CD 	= V_SOMA_BC_ST_UNIT_CD,
-						  QTD_ACUMULADA_CD   	= V_QTD_NOTA_CD
-						WHERE
-						  A.REC_ID          = V_REC_ID
-						  AND A.DET_ID      = V_DET_ID
-						  AND A.ID_ENTRADA  = V_REF_ID_ENTRADA;
+					UPDATE USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET
+					  SET 
+						vl_base_st    	= V_VL_BASE_ST_CALCULADA,
+						VL_BC_ST_UNIT 	= (CASE WHEN VOLUME = 0 THEN 0 ELSE (V_VL_BASE_ST_CALCULADA/VOLUME) END)
+					WHERE ID = V_REF_ID_ENTRADA;
 
-						UPDATE USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET
-						  SET 
-							vl_base_st    	= V_VL_BASE_ST_CALCULADA,
-							VL_BC_ST_UNIT 	= (CASE WHEN VOLUME = 0 THEN 0 ELSE (V_VL_BASE_ST_CALCULADA/VOLUME) END)
-						WHERE ID = V_REF_ID_ENTRADA;
-
-						END; -- Fim Fluxo buscando do CD para notas de transferência
-					END IF;
+					END; -- Fim Fluxo buscando do CD para notas de transferência
 				END IF;
 
 			  --COMMIT; -- REMOVER (SOMENTE PARA DEBUG
