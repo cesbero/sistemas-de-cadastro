@@ -1,17 +1,36 @@
 
 -- ALTERAÇÃO 01-06-2023. Busca irá considerar os campos de data da Venda e Entrada(Transferência). Karina
+
 CREATE OR REPLACE FUNCTION USRASSISTENTEFISCAL.FN_EXCEDENTE_ENT_CD(P_DATA_VENDA IN DATE, P_DATA_TRANSFERENCIA IN DATE, P_MERC_CODIGO IN VARCHAR)
 RETURN USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
  IS
   V_RET USRASSISTENTEFISCAL.T_EXCEDENTE_ENT; 
  
-  V_DATE 			DATE;
-  V_ID 				INTEGER := 0;
-  V_ID_ULT_ENTRADA	INTEGER := 0;  
-  
-BEGIN		
-				
-		SELECT CAST (
+BEGIN			 
+        SELECT CAST (
+              MULTISET (
+						SELECT *
+						FROM 
+						(
+							SELECT
+							  E.id, dof_sequence,dof_numero,dof_import_numero,EDOF_CODIGO,mdof_codigo,serie,filial,INFORMANTE_EST_CODIGO,cpf_cgc,cnpj_fornecedor,dt_fato_gerador_imposto,dh_emissao,cfop_codigo,operacao,DENTRO_ESTADO,stc_codigo,cod_barra,nbm_codigo,merc_codigo,descricao,idf_num,mov,vl_unit,embalagem,quantidade,volume,ESTOQUE,entsai_uni_codigo,estoque_uni_codigo,preco_total,vl_contabil,vl_ajuste_preco_total,vl_base_icms,aliq_icms,vl_icms,vl_base_st,vl_st,aliq_stf,vl_ipi,status,MES_ANO_ARQUIVO, 1 AS ATUALIZAR_ESTOQUE
+							FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
+							WHERE
+							  E.FILIAL                       IN('607','688','504','529')
+							  AND E.MERC_CODIGO              = P_MERC_CODIGO
+							  AND E.DT_FATO_GERADOR_IMPOSTO <= P_DATA_VENDA
+							  AND E.ESTOQUE 				 > 0
+							ORDER BY DT_FATO_GERADOR_IMPOSTO DESC
+						)
+						WHERE ROWNUM < 2
+					
+                ) AS USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
+        ) INTO V_RET FROM DUAL;
+
+        IF V_RET.COUNT <= 0
+        THEN
+          BEGIN
+            SELECT CAST (
 						 MULTISET (
 									SELECT 
 										   ID,	
@@ -59,7 +78,6 @@ BEGIN
 										   ATUALIZAR_ESTOQUE
 									FROM
 									(
-									  
 									  SELECT
 										   0 ID,	
 										   NFE.DOF_SEQUENCE,        -- CAMPO INDICA A ORDEM QUE A NOTA FOI GERADA
@@ -120,7 +138,7 @@ BEGIN
 									  LEFT  JOIN SYNCHRO.COR_PESSOA P                      		ON   P.PFJ_CODIGO 	 = NFE.emitente_pfj_codigo
 									  LEFT  JOIN SYNCHRO.COR_PESSOA_VIGENCIA PV            		ON  (P.PFJ_CODIGO 	 = PV.PFJ_CODIGO AND PV.DT_FIM IS NULL)
 									  WHERE						  
-										  F.FILIAL IN('607','688','504','529')
+										  F.FILIAL 						   IN('607','688','504','529')
 										  AND NFE.DT_FATO_GERADOR_IMPOSTO <= P_DATA_TRANSFERENCIA
 										  AND NEI.MERC_CODIGO       	   = P_MERC_CODIGO						  
 										  AND NFE.CTRL_SITUACAO_DOF 	   IN ('N','B')
@@ -152,87 +170,10 @@ BEGIN
 									 
 									 ORDER BY NFE.DT_FATO_GERADOR_IMPOSTO DESC
 								) WHERE ROWNUM < 2
-
+						 	 
 			) AS USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
         ) INTO V_RET FROM DUAL;
-		
-						
-		BEGIN
-			SELECT id,DT_FATO_GERADOR_IMPOSTO INTO V_ID, V_DATE
-			FROM 
-			(
-				SELECT
-				  E.id, E.DT_FATO_GERADOR_IMPOSTO 
-				FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
-				WHERE
-				  E.FILIAL                       IN('607','688','504','529')
-				  AND E.MERC_CODIGO              = P_MERC_CODIGO
-				  AND E.DT_FATO_GERADOR_IMPOSTO <= P_DATA_TRANSFERENCIA
-				  AND NVL(E.ESTOQUE,0)			 > 0
-				ORDER BY DT_FATO_GERADOR_IMPOSTO DESC
-			)
-			WHERE ROWNUM < 2;
-
-			EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-			BEGIN
-				V_ID   := 0;
-				V_DATE := TO_DATE('1111/01/01','YYYY/MM/DD');
-			END;
-		END;
-	
-		 
-        IF V_RET.COUNT <= 0
-        THEN
-          BEGIN
-		  
-			SELECT CAST (
-			  MULTISET (
-					
-						SELECT
-						  E.id, dof_sequence,dof_numero,dof_import_numero,EDOF_CODIGO,mdof_codigo,serie,filial,INFORMANTE_EST_CODIGO,cpf_cgc,cnpj_fornecedor,dt_fato_gerador_imposto,dh_emissao,cfop_codigo,operacao,DENTRO_ESTADO,stc_codigo,cod_barra,nbm_codigo,merc_codigo,descricao,idf_num,mov,vl_unit,embalagem,quantidade,volume,NVL(ESTOQUE,0) ESTOQUE,entsai_uni_codigo,estoque_uni_codigo,preco_total,vl_contabil,vl_ajuste_preco_total,vl_base_icms,aliq_icms,vl_icms,vl_base_st,vl_st,aliq_stf,vl_ipi,status,MES_ANO_ARQUIVO, 1 AS ATUALIZAR_ESTOQUE
-						FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
-						WHERE
-						  ID = 	V_ID		
-				) AS USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
-			) INTO V_RET FROM DUAL;
-
           END;
-		  ELSE 
-			BEGIN
-			
-				IF NVL(V_ID,0) > 0
-				THEN			
-					BEGIN
-						BEGIN
-							select 1 INTO V_ID_ULT_ENTRADA from table(V_RET) WHERE DT_FATO_GERADOR_IMPOSTO > V_DATE;
-
-							EXCEPTION
-							WHEN NO_DATA_FOUND THEN V_ID_ULT_ENTRADA := 0;							
-						END;
-						
-						IF NVL(V_ID_ULT_ENTRADA,0) = 0
-						THEN 
-							BEGIN
-								SELECT CAST (
-									MULTISET (					
-										SELECT *
-										FROM 
-										(
-											SELECT
-											  E.id, dof_sequence,dof_numero,dof_import_numero,EDOF_CODIGO,mdof_codigo,serie,filial,INFORMANTE_EST_CODIGO,cpf_cgc,cnpj_fornecedor,dt_fato_gerador_imposto,dh_emissao,cfop_codigo,operacao,DENTRO_ESTADO,stc_codigo,cod_barra,nbm_codigo,merc_codigo,descricao,idf_num,mov,vl_unit,embalagem,quantidade,volume,NVL(ESTOQUE,0) ESTOQUE,entsai_uni_codigo,estoque_uni_codigo,preco_total,vl_contabil,vl_ajuste_preco_total,vl_base_icms,aliq_icms,vl_icms,vl_base_st,vl_st,aliq_stf,vl_ipi,status,MES_ANO_ARQUIVO, 1 AS ATUALIZAR_ESTOQUE
-											FROM USRASSISTENTEFISCAL.EXCEDENTE_MG_ENTRADA_DET E
-											WHERE
-											  E.ID = V_ID
-										)
-										WHERE ROWNUM < 2									 
-										) AS USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
-								) INTO V_RET FROM DUAL;
-							END;
-						END IF;
-					END;
-			    END IF;				
-			END;
         END IF;
 
 
