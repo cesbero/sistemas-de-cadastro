@@ -142,7 +142,7 @@ RETURN USRASSISTENTEFISCAL.T_EXCEDENTE_ENT
        UNION ALL
 
 
-select  ID,
+	   select  ID,
                    DOF_SEQUENCE,
                    DOF_NUMERO,
                    DOF_IMPORT_NUMERO,
