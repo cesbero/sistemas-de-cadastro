@@ -114,7 +114,21 @@ BEGIN
                      NVL(NEI.VL_ICMS,0) VL_ICMS,
                      CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END AS vl_base_st,
                      CASE WHEN  NVL(NEI.VL_STF,0)    = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0)           END AS VL_ST,
-                     NEI.aliq_stf,
+                     
+					  -- Incluído dia 24-08-2013 APOS CONVERSA COM KARINA. RECALCULANDO ALIQUOTA_ST
+					 CASE WHEN NVL(NEI.aliq_stf,0) = 0 AND ( CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END ) > 0 
+						  THEN  (
+									round(
+									(
+										NVL(NEI.VL_ICMS,0) 
+										+ 
+										CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0) END
+									)/
+										CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END,2) 
+									* 100)
+					ELSE NEI.aliq_stf
+					END aliq_stf,
+					
                      NEI.VL_IPI,
                      CASE
                       WHEN  NFE.CTRL_SITUACAO_DOF = 'N' THEN 'AUTORIZADA'
@@ -244,16 +258,29 @@ BEGIN
                      NVL(NEI.VL_ICMS,0) VL_ICMS,
                      CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END AS vl_base_st,
                      CASE WHEN  NVL(NEI.VL_STF,0)    = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0)           END AS VL_ST,
-                     NEI.aliq_stf,
-                     NEI.VL_IPI,
-                     CASE
-                    WHEN  NFE.CTRL_SITUACAO_DOF = 'N' THEN 'AUTORIZADA'
-                    WHEN  NFE.CTRL_SITUACAO_DOF = 'S' THEN 'CANCELADA'
-                    WHEN  NFE.CTRL_SITUACAO_DOF = 'I' THEN 'INUTILIZADA'
-                    WHEN  NFE.CTRL_SITUACAO_DOF = 'D' THEN 'DENEGADA'
-                     END AS STATUS,
-                     TO_CHAR(NFE.DT_FATO_GERADOR_IMPOSTO,'MMYYYY') MES_ANO_ARQUIVO,
-                     0 AS ATUALIZAR_ESTOQUE
+					 
+					  -- Incluído dia 24-08-2013 APOS CONVERSA COM KARINA. RECALCULANDO ALIQUOTA_ST
+					 CASE WHEN NVL(NEI.aliq_stf,0) = 0 AND ( CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END ) > 0 
+						  THEN  (
+									round(
+									(
+										NVL(NEI.VL_ICMS,0) 
+										+ 
+										CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0) END
+									)/
+										CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END,2) 
+									* 100)
+					ELSE NEI.aliq_stf
+					END aliq_stf,
+                    NEI.VL_IPI,
+                    CASE
+						WHEN  NFE.CTRL_SITUACAO_DOF = 'N' THEN 'AUTORIZADA'
+						WHEN  NFE.CTRL_SITUACAO_DOF = 'S' THEN 'CANCELADA'
+						WHEN  NFE.CTRL_SITUACAO_DOF = 'I' THEN 'INUTILIZADA'
+						WHEN  NFE.CTRL_SITUACAO_DOF = 'D' THEN 'DENEGADA'
+                    END AS STATUS,
+                    TO_CHAR(NFE.DT_FATO_GERADOR_IMPOSTO,'MMYYYY') MES_ANO_ARQUIVO,
+                    0 AS ATUALIZAR_ESTOQUE
                   FROM SYNCHRO.COR_DOF NFE
                   INNER JOIN SYNCHRO.COR_IDF NEI                           ON   NEI.DOF_ID   = NFE.ID
                   INNER JOIN SYNCHRO.TBFILIAL F                            ON  (F.EST_CODIGO = NFE.INFORMANTE_EST_CODIGO  OR F.FILIAL = NFE.INFORMANTE_EST_CODIGO)

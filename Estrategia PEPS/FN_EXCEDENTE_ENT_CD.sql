@@ -145,7 +145,20 @@ BEGIN
 										   NVL(NEI.VL_ICMS,0) VL_ICMS,
 										   CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END AS vl_base_st,
 										   CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0)          END AS VL_ST,
-										   NEI.aliq_stf,
+										   
+										   -- Incluído dia 24-08-2013 APOS CONVERSA COM KARINA. RECALCULANDO ALIQUOTA_ST
+										   CASE WHEN NVL(NEI.aliq_stf,0) = 0 AND ( CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END ) > 0 
+												THEN  (
+														round(
+															  (
+																NVL(NEI.VL_ICMS,0) 
+																+ 
+																CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0) END
+															  )/
+																CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END,2) 
+															  * 100)
+												ELSE NEI.aliq_stf
+										   END aliq_stf,
 										   NEI.VL_IPI,
 										   CASE
 											WHEN  NFE.CTRL_SITUACAO_DOF = 'N' THEN 'AUTORIZADA'
@@ -227,7 +240,7 @@ BEGIN
 										   VL_BASE_ICMS,
 										   aliq_icms,
 										   VL_ICMS,
-										    CASE WHEN NVL(VL_ST,0) > 0 THEN vl_base_st ELSE 0 END vl_base_st, -- Incluído dia 01-06-2013
+										   CASE WHEN NVL(VL_ST,0) > 0 THEN vl_base_st ELSE 0 END vl_base_st, -- Incluído dia 01-06-2013
 										   VL_ST,
 										   aliq_stf,
 										   VL_IPI,
@@ -275,8 +288,21 @@ BEGIN
 										   NEI.aliq_icms,
 										   NVL(NEI.VL_ICMS,0) VL_ICMS,
 										   CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END AS vl_base_st,
-										   CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0)          END AS VL_ST,
-										   NEI.aliq_stf,
+										   CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0)          	   END AS VL_ST,
+										   
+										   -- Incluído dia 24-08-2013 APOS CONVERSA COM KARINA. RECALCULANDO ALIQUOTA_ST
+										   CASE WHEN NVL(NEI.aliq_stf,0) = 0 AND ( CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END ) > 0 
+												THEN  (
+														round(
+															  (
+																NVL(NEI.VL_ICMS,0) 
+																+ 
+																CASE WHEN  NVL(NEI.VL_STF,0) = 0 THEN NVL(NEI.VL_STF_FRONTEIRA,0) ELSE NVL(NEI.VL_STF,0) END
+															  )/
+																CASE WHEN  NVL(NEI.vl_base_stf,0) = 0 THEN NVL(NEI.vl_base_stf_fronteira,0) ELSE NVL(NEI.vl_base_stf,0) END,2) 
+															  * 100)
+												ELSE NEI.aliq_stf
+										   END aliq_stf,
 										   NEI.VL_IPI,
 										   CASE
 											WHEN  NFE.CTRL_SITUACAO_DOF = 'N' THEN 'AUTORIZADA'
